@@ -25,6 +25,7 @@ public class BatchConfiguration {
     public Job firstJob(){
         return jobBuilderFactory.get("matchJob")
                 .start(nonBankBookOrderStep())
+                .next(firstJobSecondStep())
                 .build();
     }
 
@@ -41,6 +42,16 @@ public class BatchConfiguration {
 
                     log.info("run date : {}, item parameter : {}", runDate, item);
                     // run date : Sun Nov 01 00:00:00 KST 2020, item parameter : job-parameter-test
+                    return RepeatStatus.FINISHED;
+                })).build();
+    }
+
+    @Bean
+    public Step firstJobSecondStep(){
+        return stepBuilderFactory.get("firstJobSecondStep")
+                .tasklet(((contribution, chunkContext) -> {
+
+                    log.info("firstJobSecondStep!");
                     return RepeatStatus.FINISHED;
                 })).build();
     }
