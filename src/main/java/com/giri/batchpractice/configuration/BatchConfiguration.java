@@ -23,7 +23,7 @@ public class BatchConfiguration {
 
     @Bean
     public Job firstJob(){
-        return jobBuilderFactory.get("matchJob")
+        return jobBuilderFactory.get("deliverPackageJob")
                 .start(packageItemStep())
                 .next(driveToAddressStep())
                 .next(givePackageToCustomerStep())
@@ -52,6 +52,8 @@ public class BatchConfiguration {
         return stepBuilderFactory.get("driveToAddress")
                 .tasklet(((contribution, chunkContext) -> {
 
+                    // Job 이 실패하더라도, 다시 실행했을 때 실패한 Step 부터 실행되는지 테스트
+//                    if (true) throw new IllegalStateException("운전하다가 길을 잃어버림.");
                     log.info("Successfully arrived at the address!");
                     return RepeatStatus.FINISHED;
                 })).build();
