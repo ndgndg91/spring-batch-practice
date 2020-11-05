@@ -6,15 +6,17 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 
-import java.time.LocalDateTime;
+import java.util.Random;
 
 @Log4j2
-public class DeliveryDecider implements JobExecutionDecider {
+public class ReceiptDecider implements JobExecutionDecider {
 
     @Override
     public FlowExecutionStatus decide(JobExecution jobExecution, StepExecution stepExecution) {
-        String result = LocalDateTime.now().getHour() > 12 ? "PRESENT" : "NOT PRESENT";
-        log.info("Decider result is {}", result);
-        return new FlowExecutionStatus(result); // custom exit status
+
+        String exitCode = new Random().nextFloat() < .70f ? "CORRECT" : "INCORRECT";
+        log.info("The item delivered is {}", exitCode);
+
+        return new FlowExecutionStatus(exitCode);
     }
 }

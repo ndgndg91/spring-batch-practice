@@ -31,11 +31,36 @@ public class BatchConfiguration {
                 .from(driveToAddressStep())
                     .on("*").to(decider())
                         .on("PRESENT").to(givePackageToCustomerStep())
+                            .next(receiptDecider()).on("CORRECT").to(thankCustomerStep())
+                            .from(receiptDecider()).on("INCORRECT").to(refundStep())
                     .from(decider())
                         .on("NOT PRESENT").to(leaveAtDoorStep())
                 .end()
 //                .next(givePackageToCustomerStep())
                 .build();
+    }
+
+    @Bean
+    public JobExecutionDecider receiptDecider(){
+        return new ReceiptDecider();
+    }
+
+    @Bean
+    public Step thankCustomerStep(){
+        return stepBuilderFactory.get("thankCustomerStep")
+                .tasklet(((contribution, chunkContext) -> {
+                    log.info("Thanking the customer.");
+                    return RepeatStatus.FINISHED;
+                })).build();
+    }
+
+    @Bean
+    public Step refundStep(){
+        return stepBuilderFactory.get("refundStep")
+                .tasklet(((contribution, chunkContext) -> {
+                    log.info("Refund customer money");
+                    return RepeatStatus.FINISHED;
+                })).build();
     }
 
     @Bean
