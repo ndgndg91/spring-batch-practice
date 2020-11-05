@@ -23,18 +23,19 @@ public class BatchConfiguration {
 
     @Bean
     public Job firstJob(){
-        return jobBuilderFactory.get("matchJob")
-                .start(nonBankBookOrderStep())
-                .next(firstJobSecondStep())
+        return jobBuilderFactory.get("deliverPackageJob")
+                .start(packageItemStep())
+                .next(driveToAddressStep())
+                .next(givePackageToCustomerStep())
                 .build();
     }
 
     @Bean
-    public Step nonBankBookOrderStep(){
-        return stepBuilderFactory.get("nonBankBookOrderStep")
+    public Step packageItemStep(){
+        return stepBuilderFactory.get("packageItemStep")
                 .tasklet(((contribution, chunkContext) -> {
                     //    java -jar demo-0.0.1.jar "item=job-parameter-test" "run.date(date)=2020/11/01"
-                    log.info("tasklet execute!");
+                    log.info("packageItemStep execute!");
                     String item = chunkContext.getStepContext()
                             .getJobParameters().getOrDefault("item", "").toString();
                     String runDate = chunkContext.getStepContext()
@@ -47,12 +48,24 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Step firstJobSecondStep(){
-        return stepBuilderFactory.get("firstJobSecondStep")
+    public Step driveToAddressStep(){
+        return stepBuilderFactory.get("driveToAddress")
                 .tasklet(((contribution, chunkContext) -> {
 
-                    log.info("firstJobSecondStep!");
+                    // Job 이 실패하더라도, 다시 실행했을 때 실패한 Step 부터 실행되는지 테스트
+//                    if (true) throw new IllegalStateException("운전하다가 길을 잃어버림.");
+                    log.info("Successfully arrived at the address!");
                     return RepeatStatus.FINISHED;
                 })).build();
+    }
+
+    @Bean
+    public Step givePackageToCustomerStep(){
+        return this.stepBuilderFactory.get("givePackageToCustomerStep")
+                .tasklet((contribution, chunkContext) -> {
+
+                    log.info("Given the package to customer.");
+                    return RepeatStatus.FINISHED;
+                }).build();
     }
 }
