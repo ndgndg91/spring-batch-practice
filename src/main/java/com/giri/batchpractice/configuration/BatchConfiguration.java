@@ -22,12 +22,25 @@ public class BatchConfiguration {
     private final StepBuilderFactory stepBuilderFactory;
 
     @Bean
-    public Job firstJob(){
+    public Job deliverPackageJob(){
         return jobBuilderFactory.get("deliverPackageJob")
                 .start(packageItemStep())
                 .next(driveToAddressStep())
-                .next(givePackageToCustomerStep())
+                    .on("FAILED").to(storePackageStep())
+                .from(driveToAddressStep())
+                    .on("*").to(givePackageToCustomerStep())
+                .end()
+//                .next(givePackageToCustomerStep())
                 .build();
+    }
+
+    @Bean
+    public Step storePackageStep(){
+        return stepBuilderFactory.get("storePackageStep")
+                .tasklet(((contribution, chunkContext) -> {
+                    log.info("Storing the package while the customer address located.");
+                    return RepeatStatus.FINISHED;
+                })).build();
     }
 
     @Bean
@@ -53,6 +66,7 @@ public class BatchConfiguration {
                 .tasklet(((contribution, chunkContext) -> {
 
                     // Job 이 실패하더라도, 다시 실행했을 때 실패한 Step 부터 실행되는지 테스트
+                    // Conditional Flow 테스트
 //                    if (true) throw new IllegalStateException("운전하다가 길을 잃어버림.");
                     log.info("Successfully arrived at the address!");
                     return RepeatStatus.FINISHED;
