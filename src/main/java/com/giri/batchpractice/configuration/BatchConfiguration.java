@@ -7,6 +7,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,10 +29,27 @@ public class BatchConfiguration {
                 .next(driveToAddressStep())
                     .on("FAILED").to(storePackageStep())
                 .from(driveToAddressStep())
-                    .on("*").to(givePackageToCustomerStep())
+                    .on("*").to(decider())
+                        .on("PRESENT").to(givePackageToCustomerStep())
+                    .from(decider())
+                        .on("NOT PRESENT").to(leaveAtDoorStep())
                 .end()
 //                .next(givePackageToCustomerStep())
                 .build();
+    }
+
+    @Bean
+    public JobExecutionDecider decider(){
+        return new DeliveryDecider();
+    }
+
+    @Bean
+    public Step leaveAtDoorStep(){
+        return stepBuilderFactory.get("leaveAtDoorStep")
+                .tasklet(((contribution, chunkContext) -> {
+                    log.info("Leaving the package at the door.");
+                    return RepeatStatus.FINISHED;
+                })).build();
     }
 
     @Bean
