@@ -28,6 +28,8 @@ public class BatchConfiguration {
                 .start(packageItemStep())
                 .next(driveToAddressStep())
                     .on("FAILED").to(storePackageStep())
+//                    .on("FAILED").stop() // Batch Status STOPPED
+//                    .on("FAILED").fail() // Batch Status FAILED
                 .from(driveToAddressStep())
                     .on("*").to(decider())
                         .on("PRESENT").to(givePackageToCustomerStep())
