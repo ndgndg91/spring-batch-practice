@@ -1,10 +1,11 @@
-package com.giri.batchpractice.configuration;
+package com.giri.batchpractice.configuration.job;
 
+import com.giri.batchpractice.configuration.decider.DeliveryDecider;
+import com.giri.batchpractice.configuration.decider.ReceiptDecider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
@@ -14,9 +15,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Log4j2
 @Configuration
-@EnableBatchProcessing
 @RequiredArgsConstructor
-public class BatchConfiguration {
+public class DeliverPackageJobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
 
