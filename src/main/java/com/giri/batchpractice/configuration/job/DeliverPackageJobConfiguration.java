@@ -8,7 +8,10 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
+import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,10 +26,9 @@ public class DeliverPackageJobConfiguration {
     private final StepBuilderFactory stepBuilderFactory;
 
     @Bean
-    public Job deliverPackageJob(){
-        return jobBuilderFactory.get("deliverPackageJob")
-                .start(packageItemStep())
-                .next(driveToAddressStep())
+    public Flow deliveryFlow(){
+        return new FlowBuilder<SimpleFlow>("deliveryFlow")
+                .start(driveToAddressStep())
                     .on("FAILED").to(storePackageStep())
 //                    .on("FAILED").stop() // Batch Status STOPPED
 //                    .on("FAILED").fail() // Batch Status FAILED
@@ -36,9 +38,16 @@ public class DeliverPackageJobConfiguration {
                             .next(receiptDecider()).on("CORRECT").to(thankCustomerStep())
                             .from(receiptDecider()).on("INCORRECT").to(refundStep())
                     .from(decider())
-                        .on("NOT PRESENT").to(leaveAtDoorStep())
+                            .on("NOT PRESENT").to(leaveAtDoorStep())
+                .end();
+    }
+
+    @Bean
+    public Job deliverPackageJob(){
+        return jobBuilderFactory.get("deliverPackageJob")
+                .start(packageItemStep())
+                .on("*").to(deliveryFlow())
                 .end()
-//                .next(givePackageToCustomerStep())
                 .build();
     }
 

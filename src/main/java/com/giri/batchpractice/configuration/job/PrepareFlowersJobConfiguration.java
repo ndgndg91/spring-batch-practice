@@ -8,6 +8,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,8 @@ public class PrepareFlowersJobConfiguration {
 
     private final StepBuilderFactory stepBuilderFactory;
 
+    private final Flow deliveryFlow;
+
     @Bean
     public Job prepareFlowersJob(){
         return this.jobBuilderFactory.get("prepareFlowersJob")
@@ -28,9 +31,11 @@ public class PrepareFlowersJobConfiguration {
                     .on("TRIM REQUIRED").to(removeThornsStep()).next(arrangeFlowersStep())
                 .from(selectFlowersStep())
                     .on("NO TRIM REQUIRED").to(arrangeFlowersStep())
+                .from(arrangeFlowersStep()).on("*").to(deliveryFlow)
                 .end()
                 .build();
     }
+
 
     @Bean
     public Step selectFlowersStep() {
