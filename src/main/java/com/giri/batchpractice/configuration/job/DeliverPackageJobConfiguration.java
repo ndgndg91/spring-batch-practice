@@ -15,6 +15,7 @@ import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 
 @Log4j2
 @Configuration
@@ -26,6 +27,8 @@ public class DeliverPackageJobConfiguration {
     private final StepBuilderFactory stepBuilderFactory;
 
     private final Step nestedBillingJobStep;
+
+    private final Flow billingFlow;
 
     @Bean
     public Flow deliveryFlow(){
@@ -48,8 +51,11 @@ public class DeliverPackageJobConfiguration {
     public Job deliverPackageJob(){
         return jobBuilderFactory.get("deliverPackageJob")
                 .start(packageItemStep())
-                .on("*").to(deliveryFlow())
-                .next(nestedBillingJobStep)
+                // parallel flows
+                .split(new SimpleAsyncTaskExecutor())
+                .add(deliveryFlow(), billingFlow)
+//                .on("*").to(deliveryFlow())
+//                .next(nestedBillingJobStep) // this step contains billingJob
                 .end()
                 .build();
     }
