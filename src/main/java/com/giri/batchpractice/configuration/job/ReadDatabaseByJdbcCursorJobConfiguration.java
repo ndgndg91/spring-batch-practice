@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 @Log4j2
 @Configuration
 @RequiredArgsConstructor
-public class ReadDatabaseUsingSingleThreadJobConfiguration {
+public class ReadDatabaseByJdbcCursorJobConfiguration {
 
     private static final String ORDER_SQL = "SELECT order_id, first_name, last_name, email, cost, item_id, item_name, ship_date " +
             "FROM SHIPPED_ORDER " +
@@ -31,15 +31,15 @@ public class ReadDatabaseUsingSingleThreadJobConfiguration {
     private final DataSource dataSource;
 
     @Bean
-    public Job fromDatabaseUsingSingleThreadOrderJob(){
-        return jobBuilderFactory.get("fromDatabaseUsingSingleThreadOrderJob").start(fromDatabaseUsingSingleThreadStep()).build();
+    public Job readDatabaseByJdbcCursorJob(){
+        return jobBuilderFactory.get("readDatabaseByJdbcCursorJob").start(readDatabaseByJdbcCursorStep()).build();
     }
 
     @Bean
-    public Step fromDatabaseUsingSingleThreadStep(){
-        return stepBuilderFactory.get("fromDatabaseUsingSingleThreadStep")
+    public Step readDatabaseByJdbcCursorStep(){
+        return stepBuilderFactory.get("readDatabaseByJdbcCursorStep")
                 .<Order, Order>chunk(3)
-                .reader(fromDatabaseUsingSingleThreadOrderItemReader())
+                .reader(readDatabaseByJdbcCursorOrderItemReader())
                 .writer(items -> {
                     log.info("Received list size {}", items.size());
                     items.forEach(log::info);
@@ -48,8 +48,8 @@ public class ReadDatabaseUsingSingleThreadJobConfiguration {
     }
 
     @Bean
-    public ItemReader<Order> fromDatabaseUsingSingleThreadOrderItemReader(){
-        return new JdbcCursorItemReaderBuilder<Order>()
+    public ItemReader<Order> readDatabaseByJdbcCursorOrderItemReader(){
+        return new JdbcCursorItemReaderBuilder<Order>() // not thread safe, so it is possible in single thread
                 .dataSource(dataSource)
                 .name("jdbcCursorItemReader")
                 .sql(ORDER_SQL)

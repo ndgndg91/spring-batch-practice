@@ -19,7 +19,7 @@ import org.springframework.core.io.ClassPathResource;
 @Log4j2
 @Configuration
 @RequiredArgsConstructor
-public class OrderJobConfiguration {
+public class ReadCsvJobConfiguration {
 
     private static final String[] tokens = {"order_id","first_name","last_name","email","cost","item_id","item_name","ship_date"};
 
