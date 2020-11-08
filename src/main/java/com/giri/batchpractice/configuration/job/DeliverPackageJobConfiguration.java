@@ -25,6 +25,8 @@ public class DeliverPackageJobConfiguration {
 
     private final StepBuilderFactory stepBuilderFactory;
 
+    private final Step nestedBillingJobStep;
+
     @Bean
     public Flow deliveryFlow(){
         return new FlowBuilder<SimpleFlow>("deliveryFlow")
@@ -47,6 +49,7 @@ public class DeliverPackageJobConfiguration {
         return jobBuilderFactory.get("deliverPackageJob")
                 .start(packageItemStep())
                 .on("*").to(deliveryFlow())
+                .next(nestedBillingJobStep)
                 .end()
                 .build();
     }
