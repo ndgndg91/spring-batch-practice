@@ -1,17 +1,25 @@
 package com.giri.batchpractice.configuration.job;
 
+import com.giri.batchpractice.configuration.processor.TrackedOrderProcessor;
 import com.giri.batchpractice.configuration.rowmapper.OrderRowMapper;
 import com.giri.batchpractice.domain.Order;
+import com.giri.batchpractice.domain.TrackedOrder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
+import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.FileSystemResource;
 
 import javax.sql.DataSource;
 
@@ -38,13 +46,24 @@ public class JdbcCursorJobConfiguration {
     @Bean
     public Step jdbcCursorStep(){
         return stepBuilderFactory.get("jdbcCursorStep")
-                .<Order, Order>chunk(3)
+                .<Order, TrackedOrder>chunk(3)
                 .reader(jdbcCursorOrderItemReader())
-                .writer(items -> {
-                    log.info("Received list size {}", items.size());
-                    items.forEach(log::info);
-                })
+//                .processor(orderValidatingProcessor())
+                .processor(trackedOrderItemProcessor())
+                .writer(trackedOrderToJsonFileWriter())
                 .build();
+    }
+
+    @Bean
+    public ItemProcessor<Order, TrackedOrder> trackedOrderItemProcessor() {
+        return new TrackedOrderProcessor();
+    }
+
+    @Bean
+    public ItemProcessor<Order, Order> orderValidatingProcessor() {
+        BeanValidatingItemProcessor<Order> itemProcessor = new BeanValidatingItemProcessor<>();
+        itemProcessor.setFilter(true);
+        return itemProcessor;
     }
 
     @Bean
@@ -54,6 +73,15 @@ public class JdbcCursorJobConfiguration {
                 .name("jdbcCursorOrderItemReader")
                 .sql(ORDER_SQL)
                 .rowMapper(new OrderRowMapper())
+                .build();
+    }
+
+    @Bean
+    public ItemWriter<TrackedOrder> trackedOrderToJsonFileWriter(){
+        return new JsonFileItemWriterBuilder<TrackedOrder>()
+                .jsonObjectMarshaller(new JacksonJsonObjectMarshaller<>())
+                .resource(new FileSystemResource("src/main/resources/data/trackedOrder.csv"))
+                .name("trackedOrderToJsonFileWriter")
                 .build();
     }
 
