@@ -13,6 +13,8 @@ public class SkipTrackedOrderProcessor implements ItemProcessor<Order, TrackedOr
     @Override
     public TrackedOrder process(Order item) throws Exception {
         log.info("processing of item with id : {}", item.getOrderId());
+        log.info("processing with thread {}", Thread.currentThread().getName());
+
         TrackedOrder trackedOrder = new TrackedOrder(item);
         trackedOrder.setTrackingNumber(getTrackingNumber());
         return trackedOrder;
@@ -20,7 +22,7 @@ public class SkipTrackedOrderProcessor implements ItemProcessor<Order, TrackedOr
 
     private String getTrackingNumber() {
 
-        if (Math.random() < .10) {
+        if (Math.random() < .05) {
             throw  new OrderProcessingException("의도적으로 skip 하기 위한 예외");
         }
 

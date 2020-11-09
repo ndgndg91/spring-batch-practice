@@ -2,16 +2,12 @@ package com.giri.batchpractice.configuration.job;
 
 import com.giri.batchpractice.configuration.rowmapper.OrderRowMapper;
 import com.giri.batchpractice.domain.Order;
-import java.util.concurrent.Flow;
-import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.job.builder.FlowBuilder;
-import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.PagingQueryProvider;
@@ -22,11 +18,12 @@ import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
-import org.springframework.batch.item.json.JsonFileItemWriter;
 import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+
+import javax.sql.DataSource;
 
 @Log4j2
 @Configuration
@@ -109,7 +106,7 @@ public class JdbcPagingJobConfiguration {
 
     @Bean
     public ItemWriter<Order> jdbcBatchOrderItemWriter() {
-        return new JdbcBatchItemWriterBuilder<Order>().dataSource(dataSource)
+        return new JdbcBatchItemWriterBuilder<Order>().dataSource(dataSource) // thread safe, so it is possible in multi thread
             .sql(NAMED_INSERT_QUERY)
             .beanMapped()
             // using prepared statement
