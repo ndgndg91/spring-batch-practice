@@ -1,5 +1,6 @@
 package com.giri.batchpractice.configuration.job;
 
+import com.giri.batchpractice.configuration.processor.FreeShippingOrderProcessor;
 import com.giri.batchpractice.configuration.processor.TrackedOrderProcessor;
 import com.giri.batchpractice.configuration.rowmapper.OrderRowMapper;
 import com.giri.batchpractice.domain.Order;
@@ -16,6 +17,8 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
 import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
+import org.springframework.batch.item.support.CompositeItemProcessor;
+import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -85,5 +88,54 @@ public class JdbcCursorJobConfiguration {
                 .build();
     }
 
+
+    @Bean
+    public Job multipleProcessorJob(){
+        return jobBuilderFactory.get("multipleProcessorJob").start(multipleProcessorStep()).build();
+    }
+
+    @Bean
+    public Step multipleProcessorStep() {
+        return stepBuilderFactory.get("multipleProcessorStep")
+                .<Order, TrackedOrder>chunk(3)
+                .reader(jdbcCursorOrderItemReader())
+                .processor(compositeItemProcessor())
+                .writer(trackedOrderToJsonFileWriter())
+                .build();
+    }
+
+    @Bean
+    public  ItemProcessor<Order, TrackedOrder> compositeItemProcessor() {
+        return new CompositeItemProcessorBuilder<Order, TrackedOrder>()
+                .delegates(orderValidatingProcessor(),  trackedOrderItemProcessor())
+                .build();
+    }
+
+    @Bean
+    public Job filterFreeShippingJob(){
+        return jobBuilderFactory.get("filterFreeShippingJob").start(filterFreeShippingStep()).build();
+    }
+
+    @Bean
+    public Step filterFreeShippingStep() {
+        return stepBuilderFactory.get("filterFreeShippingStep")
+                .<Order, TrackedOrder>chunk(5)
+                .reader(jdbcCursorOrderItemReader())
+                .processor(filterFreeShippingProcessor())
+                .writer(trackedOrderToJsonFileWriter())
+                .build();
+    }
+
+    @Bean
+    public ItemProcessor<TrackedOrder, TrackedOrder> freeShippingOrderProcessor(){
+        return new FreeShippingOrderProcessor();
+    }
+
+    @Bean
+    public ItemProcessor<Order, TrackedOrder> filterFreeShippingProcessor() {
+        return new CompositeItemProcessorBuilder<Order, TrackedOrder>()
+                .delegates(orderValidatingProcessor(), trackedOrderItemProcessor(), freeShippingOrderProcessor())
+                .build();
+    }
 
 }
