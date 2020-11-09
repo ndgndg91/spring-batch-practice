@@ -1,5 +1,6 @@
 package com.giri.batchpractice.configuration.job;
 
+import com.giri.batchpractice.configuration.preparedstatementsetter.OrderItemPreparedStatementSetter;
 import com.giri.batchpractice.configuration.rowmapper.OrderRowMapper;
 import com.giri.batchpractice.domain.Order;
 import javax.sql.DataSource;
@@ -12,6 +13,7 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.PagingQueryProvider;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
 import org.springframework.batch.item.file.FlatFileItemWriter;
@@ -24,9 +26,13 @@ import org.springframework.core.io.FileSystemResource;
 @Log4j2
 @Configuration
 @RequiredArgsConstructor
-public class ReadDatabaseByJdbcPagingJobConfiguration {
+public class JdbcPagingJobConfiguration {
 
     private static final String[] names = {"orderId", "firstName", "lastName", "email", "cost", "itemId", "itemName", "shipDate"};
+
+    private static final String INSERT_QUERY = "INSERT INTO "
+        + "SHIPPED_ORDER_OUTPUT(order_id, first_name, last_name, email, cost, item_id, item_name, ship_date) "
+        + "VALUES(?,?,?,?,?,?,?,?)";
 
     private final JobBuilderFactory jobBuilderFactory;
 
@@ -35,17 +41,17 @@ public class ReadDatabaseByJdbcPagingJobConfiguration {
     private final DataSource dataSource;
 
     @Bean
-    public Job readDatabaseByJdbcPagingJob() throws Exception {
-        return jobBuilderFactory.get("readDatabaseByJdbcPagingJob").start(readDatabaseByJdbcPagingStep()).build();
+    public Job jdbcPagingJob() throws Exception {
+        return jobBuilderFactory.get("jdbcPagingJob").start(jdbcPagingStep()).build();
     }
 
     @Bean
-    public Step readDatabaseByJdbcPagingStep() throws Exception {
+    public Step jdbcPagingStep() throws Exception {
         // chunk size 10
-        return stepBuilderFactory.get("readDatabaseByJdbcPagingStep")
+        return stepBuilderFactory.get("jdbcPagingStep")
                 .<Order, Order>chunk(10)
                 .reader(readDatabaseByJdbcPagingOrderItemReader())
-                .writer(flatFileOrderItemWriter())
+                .writer(jdbcBatchOrderItemWriter())
                 .build();
     }
 
@@ -65,6 +71,14 @@ public class ReadDatabaseByJdbcPagingJobConfiguration {
 
         itemWriter.setLineAggregator(aggregator);
         return itemWriter;
+    }
+
+    @Bean
+    public ItemWriter<Order> jdbcBatchOrderItemWriter(){
+        return new JdbcBatchItemWriterBuilder<Order>().dataSource(dataSource)
+            .sql(INSERT_QUERY)
+            .itemPreparedStatementSetter(new OrderItemPreparedStatementSetter())
+            .build();
     }
 
     @Bean
