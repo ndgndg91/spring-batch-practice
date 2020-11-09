@@ -34,6 +34,10 @@ public class JdbcPagingJobConfiguration {
         + "SHIPPED_ORDER_OUTPUT(order_id, first_name, last_name, email, cost, item_id, item_name, ship_date) "
         + "VALUES(?,?,?,?,?,?,?,?)";
 
+    private static final String NAMED_INSERT_QUERY = "INSERT INTO "
+        + "SHIPPED_ORDER_OUTPUT(order_id, first_name, last_name, email, cost, item_id, item_name, ship_date) "
+        + "VALUES(:orderId, :firstName, :lastName, :email, :cost, :itemId, :itemName, :shipDate)";
+
     private final JobBuilderFactory jobBuilderFactory;
 
     private final StepBuilderFactory stepBuilderFactory;
@@ -76,8 +80,11 @@ public class JdbcPagingJobConfiguration {
     @Bean
     public ItemWriter<Order> jdbcBatchOrderItemWriter(){
         return new JdbcBatchItemWriterBuilder<Order>().dataSource(dataSource)
-            .sql(INSERT_QUERY)
-            .itemPreparedStatementSetter(new OrderItemPreparedStatementSetter())
+            .sql(NAMED_INSERT_QUERY)
+            .beanMapped()
+            // using prepared statement
+//            .sql(INSERT_QUERY)
+//            .itemPreparedStatementSetter(new OrderItemPreparedStatementSetter())
             .build();
     }
 
