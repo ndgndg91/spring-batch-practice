@@ -53,7 +53,7 @@ public class ReadDatabaseByJdbcPagingJobConfiguration {
     public ItemWriter<Order> flatFileOrderItemWriter(){
         FlatFileItemWriter<Order> itemWriter = new FlatFileItemWriter<>();
 
-        itemWriter.setResource(new FileSystemResource("data/shipped_order_output.csv"));
+        itemWriter.setResource(new FileSystemResource("src/main/resources/data/shipped_order_output.csv"));
 
         DelimitedLineAggregator<Order> aggregator = new DelimitedLineAggregator<>();
         aggregator.setDelimiter(",");

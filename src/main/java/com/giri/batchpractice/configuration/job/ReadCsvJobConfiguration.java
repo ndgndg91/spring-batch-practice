@@ -14,7 +14,7 @@ import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
 @Log4j2
 @Configuration
@@ -48,7 +48,7 @@ public class ReadCsvJobConfiguration {
     public ItemReader<Order> orderItemReader(){
         FlatFileItemReader<Order> itemReader = new FlatFileItemReader<>();
         itemReader.setLinesToSkip(1);
-        itemReader.setResource(new ClassPathResource("data/shipped_orders.csv"));
+        itemReader.setResource(new FileSystemResource("src/main/resources/data/shipped_orders.csv"));
 
         DefaultLineMapper<Order> lineMapper = new DefaultLineMapper<>();
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
