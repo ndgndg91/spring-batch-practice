@@ -18,7 +18,7 @@ public class SkipTrackedOrderProcessor implements ItemProcessor<Order, TrackedOr
         return trackedOrder;
     }
 
-    private String getTrackingNumber() throws OrderProcessingException {
+    private String getTrackingNumber() {
 
         if (Math.random() < .10) {
             throw  new OrderProcessingException("의도적으로 skip 하기 위한 예외");

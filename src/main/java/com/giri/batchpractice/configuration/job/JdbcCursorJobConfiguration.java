@@ -1,6 +1,7 @@
 package com.giri.batchpractice.configuration.job;
 
 import com.giri.batchpractice.configuration.exception.OrderProcessingException;
+import com.giri.batchpractice.configuration.listener.MyRetryListener;
 import com.giri.batchpractice.configuration.listener.MySkipListener;
 import com.giri.batchpractice.configuration.processor.FreeShippingOrderProcessor;
 import com.giri.batchpractice.configuration.processor.SkipTrackedOrderProcessor;
@@ -164,9 +165,12 @@ public class JdbcCursorJobConfiguration {
                 .reader(jdbcCursorOrderItemReader())
                 .processor(faultTolerantShippingProcessor())
                 .faultTolerant()
-                .skip(OrderProcessingException.class)
-                .skipLimit(5)
-                .listener(new MySkipListener())
+                .retry(OrderProcessingException.class)
+                .retryLimit(3)
+                .listener(new MyRetryListener())
+//                .skip(OrderProcessingException.class)
+//                .skipLimit(5)
+//                .listener(new MySkipListener())
                 .writer(trackedOrderToJsonFileWriter())
                 .build();
 
