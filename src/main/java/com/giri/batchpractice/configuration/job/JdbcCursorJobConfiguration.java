@@ -1,6 +1,9 @@
 package com.giri.batchpractice.configuration.job;
 
+import com.giri.batchpractice.configuration.exception.OrderProcessingException;
+import com.giri.batchpractice.configuration.listener.MySkipListener;
 import com.giri.batchpractice.configuration.processor.FreeShippingOrderProcessor;
+import com.giri.batchpractice.configuration.processor.SkipTrackedOrderProcessor;
 import com.giri.batchpractice.configuration.processor.TrackedOrderProcessor;
 import com.giri.batchpractice.configuration.rowmapper.OrderRowMapper;
 import com.giri.batchpractice.domain.Order;
@@ -17,7 +20,6 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
 import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
-import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
 import org.springframework.context.annotation.Bean;
@@ -136,6 +138,38 @@ public class JdbcCursorJobConfiguration {
         return new CompositeItemProcessorBuilder<Order, TrackedOrder>()
                 .delegates(orderValidatingProcessor(), trackedOrderItemProcessor(), freeShippingOrderProcessor())
                 .build();
+    }
+
+    @Bean
+    public ItemProcessor<Order, TrackedOrder> skipTrackedOrderProcessor(){
+        return new SkipTrackedOrderProcessor();
+    }
+
+    @Bean
+    public ItemProcessor<Order, TrackedOrder> faultTolerantShippingProcessor() {
+        return new CompositeItemProcessorBuilder<Order, TrackedOrder>()
+                .delegates(orderValidatingProcessor(), skipTrackedOrderProcessor(), freeShippingOrderProcessor())
+                .build();
+    }
+
+    @Bean
+    public Job faultTolerantOrderJob(){
+        return jobBuilderFactory.get("faultTolerantOrderJob").start(faultTolerantOrderStep()).build();
+    }
+
+    @Bean
+    public Step faultTolerantOrderStep(){
+        return stepBuilderFactory.get("faultTolerantOrderStep")
+                .<Order, TrackedOrder>chunk(5)
+                .reader(jdbcCursorOrderItemReader())
+                .processor(faultTolerantShippingProcessor())
+                .faultTolerant()
+                .skip(OrderProcessingException.class)
+                .skipLimit(5)
+                .listener(new MySkipListener())
+                .writer(trackedOrderToJsonFileWriter())
+                .build();
+
     }
 
 }
