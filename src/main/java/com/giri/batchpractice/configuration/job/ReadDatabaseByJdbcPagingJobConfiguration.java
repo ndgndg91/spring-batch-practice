@@ -2,6 +2,7 @@ package com.giri.batchpractice.configuration.job;
 
 import com.giri.batchpractice.configuration.rowmapper.OrderRowMapper;
 import com.giri.batchpractice.domain.Order;
+import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.batch.core.Job;
@@ -9,18 +10,23 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.PagingQueryProvider;
 import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.sql.DataSource;
+import org.springframework.core.io.FileSystemResource;
 
 @Log4j2
 @Configuration
 @RequiredArgsConstructor
 public class ReadDatabaseByJdbcPagingJobConfiguration {
+
+    private static final String[] names = {"orderId", "firstName", "lastName", "email", "cost", "itemId", "itemName", "shipDate"};
 
     private final JobBuilderFactory jobBuilderFactory;
 
@@ -39,11 +45,26 @@ public class ReadDatabaseByJdbcPagingJobConfiguration {
         return stepBuilderFactory.get("readDatabaseByJdbcPagingStep")
                 .<Order, Order>chunk(10)
                 .reader(readDatabaseByJdbcPagingOrderItemReader())
-                .writer(items -> {
-                    log.info("Received list size {}", items.size());
-                    items.forEach(log::info);
-                })
+                .writer(flatFileOrderItemWriter())
                 .build();
+    }
+
+    @Bean
+    public ItemWriter<Order> flatFileOrderItemWriter(){
+        FlatFileItemWriter<Order> itemWriter = new FlatFileItemWriter<>();
+
+        itemWriter.setResource(new FileSystemResource("data/shipped_order_output.csv"));
+
+        DelimitedLineAggregator<Order> aggregator = new DelimitedLineAggregator<>();
+        aggregator.setDelimiter(",");
+
+        BeanWrapperFieldExtractor<Order> extractor = new BeanWrapperFieldExtractor<>();
+        extractor.setNames(names);
+
+        aggregator.setFieldExtractor(extractor);
+
+        itemWriter.setLineAggregator(aggregator);
+        return itemWriter;
     }
 
     @Bean
