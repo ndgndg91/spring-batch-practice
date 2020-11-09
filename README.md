@@ -32,3 +32,13 @@ String value1 = chunkContext.getStepContext().getJobParameters().getOrDefault("k
 String value2 = chunkContext.getStepContext().getJobParameters().getOrDefault("key2", "").toString();
 String value3 = chunkContext.getStepContext().getJobParameters().getOrDefault("key3", "").toString();
 </pre>
+
+특정 Job 사용 방법<br>
+
+<pre>
+java -jar -Dspring.batch.job.names={job 이름} ./build/libs/{jar 이름}.jar 
+</pre>
+
+Step Listener
+<img width="1813" alt="_2020-11-07__10 17 39" src="https://user-images.githubusercontent.com/19872667/98443419-7809b580-214e-11eb-9046-2d1f71ef8487.png">
+
