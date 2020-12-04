@@ -32,7 +32,7 @@ dependencies {
     implementation 'javax.el:javax.el-api:3.0.0'
     implementation 'org.glassfish.web:javax.el:2.2.6'
     implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    runtimeOnly 'mysql:mysql-connector-java'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
@@ -41,8 +41,4 @@ dependencies {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
     testImplementation 'org.springframework.batch:spring-batch-test'
-}
-
-test {
-    useJUnitPlatform()
 }

@@ -2,7 +2,7 @@ spring:
   batch:
     initialize-schema: always
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/batch_demo
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://batch-demo.crtxqczk1noq.ap-northeast-2.rds.amazonaws.com/batch_demo
     username: batch_demo
     password: batch_demo

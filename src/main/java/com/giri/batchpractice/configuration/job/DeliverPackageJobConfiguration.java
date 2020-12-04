@@ -119,6 +119,11 @@ public class DeliverPackageJobConfiguration {
 
                     log.info("run date : {}, item parameter : {}", runDate, item);
                     // run date : Sun Nov 01 00:00:00 KST 2020, item parameter : job-parameter-test
+                    for (int i = 0; i < 900; i++) {
+                        Thread.sleep(1000);
+                        log.info("{} second!", i+1);
+                    }
+
                     return RepeatStatus.FINISHED;
                 })).build();
     }
